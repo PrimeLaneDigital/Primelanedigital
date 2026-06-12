@@ -28,6 +28,12 @@ textarea {
   font: inherit;
 }
 
+.form-error {
+  margin: 0.75rem 0 0;
+  color: #ff8a80;
+  font-size: 0.9rem;
+}
+
 .app-shell {
   min-height: 100vh;
   display: flex;

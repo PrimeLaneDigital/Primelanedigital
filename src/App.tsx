@@ -1,35 +1,60 @@
 import './App.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+type Review = {
+  id: number;
+  rating: number;
+  text: string;
+  date: string;
+};
+
+const REVIEWS_STORAGE_KEY = 'primelanedigital-reviews';
+
+function loadReviews(): Review[] {
+  try {
+    const stored = localStorage.getItem(REVIEWS_STORAGE_KEY);
+    return stored ? (JSON.parse(stored) as Review[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 function App() {
   const [selectedRating, setSelectedRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
-  const [reviews, setReviews] = useState([]);
+  const [reviews, setReviews] = useState<Review[]>(loadReviews);
+  const [formError, setFormError] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem(REVIEWS_STORAGE_KEY, JSON.stringify(reviews));
+  }, [reviews]);
 
   const handleStarClick = (rating: number) => {
     setSelectedRating(rating);
+    setFormError('');
   };
 
   const handleSubmitReview = () => {
     if (selectedRating === 0) {
-      alert('Please select a rating');
+      setFormError('Please select a rating.');
       return;
     }
     if (reviewText.trim() === '') {
-      alert('Please write a review');
+      setFormError('Please write a review.');
       return;
     }
 
-    const newReview = {
+    const newReview: Review = {
       id: Date.now(),
       rating: selectedRating,
-      text: reviewText,
+      text: reviewText.trim(),
       date: new Date().toLocaleDateString()
     };
 
     setReviews([newReview, ...reviews]);
     setSelectedRating(0);
     setReviewText('');
+    setFormError('');
   };
 
   return (
@@ -42,6 +67,7 @@ function App() {
         <div className="nav-links">
           <a href="#services">Services</a>
           <a href="#about">About</a>
+          <a href="#ratings">Reviews</a>
           <a href="#contact">Contact</a>
         </div>
       </nav>
@@ -169,7 +195,7 @@ function App() {
             <h2>Designed for businesses that demand refinement</h2>
           </div>
           <p className="about-copy">
-            We build website for local clothing brands and buisnesses
+            We build websites for local clothing brands and businesses.
           </p>
         </section>
 
@@ -179,13 +205,16 @@ function App() {
             <h2>Share your rating and what you think of us</h2>
           </div>
           <div className="rating-card">
-            <div className="stars">
+            <div className="stars" role="radiogroup" aria-label="Select a rating">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   type="button"
                   onClick={() => handleStarClick(star)}
                   className={selectedRating >= star ? 'star-active' : ''}
+                  role="radio"
+                  aria-checked={selectedRating === star}
+                  aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
                 >
                   ★
                 </button>
@@ -194,9 +223,15 @@ function App() {
             <textarea
               className="review-input"
               placeholder="Write your review here..."
+              aria-label="Your review"
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
             ></textarea>
+            {formError && (
+              <p className="form-error" role="alert">
+                {formError}
+              </p>
+            )}
             <button
               className="btn btn-primary submit-review"
               type="button"
@@ -219,9 +254,17 @@ function App() {
               reviews.map((review) => (
                 <div key={review.id} className="review-item">
                   <div className="review-header">
-                    <div className="review-stars">
+                    <div
+                      className="review-stars"
+                      role="img"
+                      aria-label={`${review.rating} out of 5 stars`}
+                    >
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <span key={star} className={star <= review.rating ? 'star-filled' : 'star-empty'}>
+                        <span
+                          key={star}
+                          aria-hidden="true"
+                          className={star <= review.rating ? 'star-filled' : 'star-empty'}
+                        >
                           ★
                         </span>
                       ))}
